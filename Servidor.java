@@ -6,18 +6,20 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 
+
 public class Servidor 
 {
 	
 	public static void main(String[] args)throws IOException
 	{
 		//Criando o socket do servidor UDP na porta 
-        DatagramSocket server_socket = new DatagramSocket(8765);
+        DatagramSocket server_socket = new DatagramSocket(9876);
         
         //impressão na tela para avisar que o servidor está pront para testar o status de streaming
         System.out.println("Servidor pronto para teste de streaming.");
         
         //loop infinito para sempre receber requisições de usuários
+        
         while (true) 
         {
         	
@@ -52,32 +54,32 @@ class interacoesCliente implements Runnable
         this.rcvPacket = rcvPacket;
     }
     
-    //funcao comum para envio de todas os tipos de mensagens
-    public void envio_ao_cliente(String resposta, DatagramSocket server_socket,InetAddress endereco_IP,int portaCliente) throws IOException
+ 
+    
+    ///funcao para checar validade do email
+    public static boolean checa_email( String mensagemCliente, boolean check_email)
     {
-
-    	//Definindo buffer de envio de dados ao Cliente e atribuindo a resposta do servidor ao cliente
-        byte[] sndData = resposta.getBytes();
-        
-        //Criando um datagrama de resposta para o cliente
-        DatagramPacket sndPacket = new DatagramPacket(sndData, sndData.length, endereco_IP, portaCliente);
-        
-        //enviando datagrama ao cliente
-        server_socket.send(sndPacket);
-
+    	 String regexEmail = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$";
+    	 
+    	 Pattern pattern = Pattern.compile(regexEmail);
+    	 Matcher matcher = pattern.matcher(mensagemCliente);
+    	
+    	 check_email = matcher.matches();
+    	 
+    	return check_email;
     }
     
-    public static String isValidEmailAddressRegex(String email) {
-        String isEmailIdValid = "invalido";
-        if (email != null && email.length() > 0) {
-            String expression = "^[\\w\\.-]+@([\\w\\-]+\\.)+[A-Z]{2,4}$";
-            Pattern pattern = Pattern.compile(expression, Pattern.CASE_INSENSITIVE);
-            Matcher matcher = pattern.matcher(email);
-            if (matcher.matches()) {
-                isEmailIdValid = "valido";
-            }
-        }
-        return isEmailIdValid;
+    ///funcao para checar validade da senha
+    public static boolean check_senha( String mensagemCliente, boolean check_senha)
+    {
+    	 String regexSenha = "^\\d{4}$";
+    	 
+    	 Pattern pattern = Pattern.compile(regexSenha);
+    	 Matcher matcher = pattern.matcher(mensagemCliente);
+    	
+    	 check_senha = matcher.matches();
+    	 
+    	return check_senha;
     }
     
     
@@ -97,48 +99,69 @@ class interacoesCliente implements Runnable
             InetAddress endereco_IP = rcvPacket.getAddress();
             int portaCliente = rcvPacket.getPort();
             
-            ///////////CHECANDO SE A ENTRADA É UM EMAIL E SE É VALIDO
-	            String check_email = mensagemCliente; 
-	            
-	            isValidEmailAddressRegex(check_email);
-	            
-	            //se a funcao retornar valido, a mensagem_cliente continua a mesma e passa pelas condições
-	            if(check_email.equals("valido")) 
-	            {	            	System.out.println("email eh valido");
-	            	mensagemCliente = check_email;
-	            }
-	         ///////////CHECANDO SE A ENTRADA É UM EMAIL E SE É VALIDO
-
+            //checando se eh email
+            boolean check_email = false;
+            boolean check_senha = false;
             
-            switch (mensagemCliente)
+            
+            if(mensagemCliente.equals("check"))
             {
-            	case "check":
-            		//Resposta para o cliente
-                    String resposta_streaming = "Streaming Ativo!";
-                    
-                    envio_ao_cliente(resposta_streaming, server_socket, endereco_IP, portaCliente);
-                    
-            	 
-            	case "valido":
-            		//Resposta para o cliente
-                    String resposta_autenticacao = "E-mail valido! Agora digite a sua senha";
-                    
-                    envio_ao_cliente(resposta_autenticacao, server_socket, endereco_IP, portaCliente);
+         	   String resposta = "Streaming Checkado";
                 
-            	
-                    
-                    
-                default:
-                	//Resposta para o cliente
-                    String resposta_erro = "Entrada incorreta!";
-                    
-                    envio_ao_cliente(resposta_erro, server_socket, endereco_IP, portaCliente);
-
-                    
+                byte[] sndData = resposta.getBytes();
+     	            
+     	       //Criando um datagrama de resposta para o cliente
+     	       DatagramPacket sndPacket = new DatagramPacket(sndData, sndData.length, endereco_IP, portaCliente);
+     	            
+     	       //enviando datagrama ao cliente
+     	       server_socket.send(sndPacket);
+            }
+                        
+            else if(checa_email( mensagemCliente, check_email))
+            {            	
+            	String resposta = "E-mail valido! Agora digite sua senha:";
+                
+                byte[] sndData = resposta.getBytes();
+     	            
+     	       //Criando um datagrama de resposta para o cliente
+     	       DatagramPacket sndPacket = new DatagramPacket(sndData, sndData.length, endereco_IP, portaCliente);
+     	            
+     	       //enviando datagrama ao cliente
+     	       server_socket.send(sndPacket);
             }
             
+            else if(check_senha(mensagemCliente, check_senha))
+            {
+            	String resposta = "Senha valida! Boas vindas!";
+                
+                byte[] sndData = resposta.getBytes();
+     	            
+     	       //Criando um datagrama de resposta para o cliente
+     	       DatagramPacket sndPacket = new DatagramPacket(sndData, sndData.length, endereco_IP, portaCliente);
+     	            
+     	       //enviando datagrama ao cliente
+     	       server_socket.send(sndPacket);
+            }
+
+          
+           else
+           {
+        	   String resposta = "Entrada incorreta!";
+               
+               byte[] sndData = resposta.getBytes();
+    	            
+    	       //Criando um datagrama de resposta para o cliente
+    	       DatagramPacket sndPacket = new DatagramPacket(sndData, sndData.length, endereco_IP, portaCliente);
+    	            
+    	       //enviando datagrama ao cliente
+    	       server_socket.send(sndPacket);
+           }
+          
+           
+	           
+           
             
-            
+           
            
             
         } 
